@@ -1,4 +1,4 @@
-name: iOS SDK Tests
+name: Swift Embed SDK Tests
 
 on:
   push:
@@ -21,6 +21,6 @@ jobs:
     - name: Run tests
       run: |
         xcodebuild test \
-        -scheme iOS-native-embed-sdk \
+        -scheme SwiftEmbedSDK \
         -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.2"
 
