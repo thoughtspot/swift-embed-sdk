@@ -50,9 +50,17 @@ public final class LiveboardEmbedController: ObservableObject {
     public func trigger(event: HostEvent, data: [String: Any]? = nil) {
         base.trigger(event: event, data: data)
     }
+    
+    public func cleanup() {
+        webView.loadHTMLString("", baseURL: nil)
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        webView.removeFromSuperview()
+    }
 
     // MARK: - Deinit
     deinit {
-         print("LiveboardEmbedController deinit")
+         print("LiveboardEmbedController cleanup happening")
+         cleanup()
     }
 }
