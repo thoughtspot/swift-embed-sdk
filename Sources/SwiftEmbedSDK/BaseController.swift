@@ -6,6 +6,16 @@ import Combine
 public enum SpecificViewConfig: Codable {
     case liveboard(LiveboardViewConfig)
     // cases for ALL specific view config types we need
+    
+//    public static func == (lhs: SpecificViewConfig, rhs: SpecificViewConfig) -> Bool {
+//        switch (lhs, rhs) {
+//        case (.liveboard(let lhsConfig), .liveboard(let rhsConfig)):
+//            return lhsConfig == rhsConfig
+//        default:
+//            return false
+//        }
+//        
+//    }
 }
 
 public class BaseEmbedController: NSObject,
@@ -20,6 +30,7 @@ public class BaseEmbedController: NSObject,
     public let embedType: String
     internal var onMessageSend: (([String: Any]) -> Void)? = nil
     public var getAuthTokenCallback: (() -> Future<String, Error>)?
+    internal var initializationCompletion: ((Result<Void, Error>) -> Void)?
 
     private var cancellables = Set<AnyCancellable>()
     private let shellURL = URL(string: "https://mobile-embed-shell.vercel.app")!
@@ -27,19 +38,21 @@ public class BaseEmbedController: NSObject,
 
     // --- Storage for Event Listeners ---
     public typealias EventCallback = (Any?) -> Void
-    private var eventListeners: [EmbedEvent: [EventCallback]] = [:]
+    internal var eventListeners: [EmbedEvent: [EventCallback]] = [:]
 
     // --- Passing EmbedConfig, ViewConfig ( Corresponding to the EmbedType ), embedType, authTokenCallback ---
     public init(
         embedConfig: EmbedConfig,
         viewConfig: SpecificViewConfig,
         embedType: String,
-        getAuthTokenCallback: (() -> Future<String, Error>)? = nil
+        getAuthTokenCallback: (() -> Future<String, Error>)? = nil,
+        initializationCompletion: ((Result<Void, Error>) -> Void)? = nil
     ) {
         self.embedConfig = embedConfig
         self.viewConfig  = viewConfig
         self.embedType   = embedType
         self.getAuthTokenCallback = getAuthTokenCallback
+        self.initializationCompletion = initializationCompletion
         super.init()
 
         // Configure WebView
@@ -120,6 +133,7 @@ public class BaseEmbedController: NSObject,
         isShellInitialized = true
         sendEmbedConfigToShell()
         sendViewConfigToShell()
+        self.initializationCompletion?(.success(()))
     }
 
     // Vercel Shell requests the Auth Token - We get the token and send back.
@@ -130,6 +144,7 @@ public class BaseEmbedController: NSObject,
             if case .failure(let err) = comp {
               let msg: [String:Any] = ["type":"AUTH_TOKEN_ERROR", "error": err.localizedDescription]
               self.sendJsonMessageToShell(msg)
+                self.initializationCompletion?(.failure(err))
             }
           }, receiveValue: { token in
             self.sendJsonMessageToShell(["token": token, "type":"AUTH_TOKEN_RESPONSE"] )
@@ -159,6 +174,7 @@ public class BaseEmbedController: NSObject,
 
         } catch {
             print("Error encoding or processing EmbedConfig for sending: \(error)")
+            self.initializationCompletion?(.failure(error))
         }
     }
 
@@ -176,7 +192,10 @@ public class BaseEmbedController: NSObject,
                 let msg: [String:Any] = ["embedType": embedType, "viewConfig": obj, "type":"EMBED"]
                 sendJsonMessageToShell(msg)
             }
-        } catch { print("Error encoding specific view config: \(error)") }
+        } catch {
+            print("Error encoding specific view config: \(error)")
+            self.initializationCompletion?(.failure(error))
+        }
     }
 
     @objc func sendJsonMessageToShell(_ message: [String: Any]) {
@@ -197,15 +216,19 @@ public class BaseEmbedController: NSObject,
             }
         } catch { print("Error serializing message for JS: \(error)") }
     }
+    
+    public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
+        print("Error during provisional navigation: \(error.localizedDescription)")
+        self.initializationCompletion?(.failure(error))
+    }
 
-    // webView didFinish
+    public func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
+        print("Error during navigation: \(error.localizedDescription)")
+        self.initializationCompletion?(.failure(error))
+    }
+
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // Use a small delay to ensure shell JS is ready
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            print("WebView finished loading. Sending INIT_VERCEL_SHELL.")
-            let initMsg: [String:Any] = ["type":"INIT_VERCEL_SHELL","status":"ready"]
-            self.sendJsonMessageToShell(initMsg)
-        }
+        print("WebView didFinish navigation")
     }
 
     // MARK: - Public Event Listener API

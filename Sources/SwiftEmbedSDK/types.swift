@@ -14,13 +14,16 @@ import Combine
 public struct TSEmbedConfig {
     public let embedConfig: EmbedConfig
     public let getAuthToken: (() -> Future<String, Error>)?
+    public var initializationCompletion: ((Result<Void, Error>) -> Void)? = nil
 
     public init(
         embedConfig: EmbedConfig,
-        getAuthToken: (() -> Future<String, Error>)?
+        getAuthToken: (() -> Future<String, Error>)? = nil,
+        initializationCompletion: ((Result<Void, Error>) -> Void)? = nil
     ) {
         self.embedConfig = embedConfig
         self.getAuthToken = getAuthToken
+        self.initializationCompletion = initializationCompletion
     }
 }
 

@@ -4,16 +4,12 @@ import WebKit
 /// SwiftUI View for embedding Liveboards.
 /// Initialize this view with an instance of `LiveboardEmbedController`.
 public struct LiveboardEmbed: View {
-    // Using @ObservedObject because the controller's lifecycle
-    // is managed by the parent view (using @StateObject)
     @ObservedObject public var controller: LiveboardEmbedController
 
-    // Initializer accepts the controller
     public init(controller: LiveboardEmbedController) {
         self.controller = controller
     }
 
-    // The body displays the web content using a representable
     public var body: some View {
         WebViewRepresentable(webView: controller.webView)
             .onAppear {
@@ -32,7 +28,6 @@ public struct LiveboardEmbed: View {
 
         func makeUIView(context: Context) -> WKWebView {
             print("WebViewRepresentable: makeUIView called")
-            // Return the webView instance from the controller
             return webView
         }
 
