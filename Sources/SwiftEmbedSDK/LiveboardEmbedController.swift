@@ -27,7 +27,8 @@ public final class LiveboardEmbedController: ObservableObject {
             embedConfig: tsEmbedConfig.embedConfig,
             viewConfig: .liveboard(viewConfig),
             embedType: "Liveboard",
-            getAuthTokenCallback: tsEmbedConfig.getAuthToken
+            getAuthTokenCallback: tsEmbedConfig.getAuthToken,
+            initializationCompletion: tsEmbedConfig.initializationCompletion
         )
         print("LiveboardEmbedController Initialized")
     }
