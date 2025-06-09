@@ -6540,3 +6540,15 @@ public typealias ColumnValue__value = AnyCodable
 
 
 // End of generated Swift code
+
+struct AnyCodableEncodable: Encodable {
+    private let encodeClosure: (Encoder) throws -> Void
+
+    init<T: Encodable>(_ encodable: T) {
+        self.encodeClosure = encodable.encode
+    }
+
+    func encode(to encoder: Encoder) throws {
+        try encodeClosure(encoder)
+    }
+}

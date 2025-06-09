@@ -47,7 +47,7 @@ public final class LiveboardEmbedController: ObservableObject {
     }
 
     /// Triggers an event to be sent to the embedded Liveboard.
-    public func trigger(event: HostEvent, data: [String: Any]? = nil) {
+    public func trigger(event: HostEvent, data: Any? = nil) {
         base.trigger(event: event, data: data)
     }
     

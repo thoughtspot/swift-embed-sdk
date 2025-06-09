@@ -69,6 +69,15 @@ public class BaseEmbedController: NSObject,
         injectReactNativeWebViewShim()
         webView.load(URLRequest(url: shellURL))
     }
+    
+    static func convertToJsonCompatible(_ object: Any) -> Any? {
+        if JSONSerialization.isValidJSONObject(object) {
+            return object
+        } else {
+            print("❌ Object is not JSON serializable")
+            return nil
+        }
+    }
 
     private func injectReactNativeWebViewShim() {
         let js = """
@@ -260,18 +269,28 @@ public class BaseEmbedController: NSObject,
     /// - Parameters:
     ///   - event: The `HostEvent` to trigger.
     ///   - data: Optional dictionary containing data for the event payload. Defaults to empty.
-    public func trigger(event: HostEvent, data: [String: Any]? = nil) {
+    public func trigger(event: HostEvent, data: Any? = nil) {
         let eventId = UUID().uuidString
-        let embedEventPayload: [String: Any] = [
+
+        var embedEventPayload: [String: Any] = [
             "eventName": event.rawValue,
-            "payload": data ?? [:],
             "eventId": eventId,
             "type": "HOST_EVENT"
         ]
+
+        if let data = data {
+            if let converted = Self.convertToJsonCompatible(data) {
+                embedEventPayload["payload"] = converted
+            } else {
+                print("⚠️ Warning: Provided data is not JSON-serializable. Skipping payload.")
+            }
+        }
+
         print("Triggering Host Event: \(event.rawValue)")
         sendJsonMessageToShell(embedEventPayload)
-        // TODO: Does not currently wait for or handle responses from the embed.
+        // TODO : reply to hostEvent
     }
+
 
     // MARK: - Cleanup (Example)
     deinit {
