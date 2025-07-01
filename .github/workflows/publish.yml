@@ -18,10 +18,19 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-    
-      - name: Build using xcodebuild
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Build for iOS Simulator
         run: |
-          xcodebuild -scheme SwiftEmbedSDK -destination 'platform=iOS Simulator,name=iPhone 14'
+          xcodebuild \
+            -scheme SwiftEmbedSDK \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.2' \
+            -sdk iphonesimulator \
+            clean build
 
       - name: Create Git Tag
         run: |
