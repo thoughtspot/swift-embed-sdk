@@ -6,16 +6,6 @@ import Combine
 public enum SpecificViewConfig: Codable {
     case liveboard(LiveboardViewConfig)
     // cases for ALL specific view config types we need
-    
-//    public static func == (lhs: SpecificViewConfig, rhs: SpecificViewConfig) -> Bool {
-//        switch (lhs, rhs) {
-//        case (.liveboard(let lhsConfig), .liveboard(let rhsConfig)):
-//            return lhsConfig == rhsConfig
-//        default:
-//            return false
-//        }
-//        
-//    }
 }
 
 public class BaseEmbedController: NSObject,
@@ -178,7 +168,7 @@ public class BaseEmbedController: NSObject,
             }
 
             payloadDict["getTokenFromSDK"] = true
-            let msg: [String: Any] = ["payload": payloadDict, "type": "INIT"]
+            let msg: [String: Any] = ["payload": payloadDict, "type": "INIT", "sdkType": "swift-embed-sdk", "version": SwiftEmbedSDKVersion.current]
             sendJsonMessageToShell(msg)
 
         } catch {
